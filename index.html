@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>坤的个人牧场</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+/* ============ 基础重置 ============ */
+*{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;image-rendering:crisp-edges}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'ZCOOL KuaiLe','Microsoft YaHei',sans-serif;cursor:none}
+button{font-family:inherit;cursor:pointer}
+
+/* ============ 调色板（白天·默认） ============ */
+:root{
+  --sage-1:#e8f0e2; --sage-2:#c5dcc0; --sage-3:#a8c9a0; --sage-4:#7faa76; --sage-5:#5a8a52;
+  --cream-1:#fdf8f2; --cream-2:#f5ede0; --cream-3:#ebe0cc;
+  --pink-1:#fbe4e4; --pink-2:#f2c8c8; --pink-3:#e8a8a8;
+  --gold:#e8d090; --outline:#4a5a42; --ink:#3a4a34;
+  /* 主题相关变量 */
+  --sky-top:#eaf3e4; --sky-mid:#f6efe2; --sky-bot:#fdf6ec;
+  --gnd-1:#e8f0e2; --gnd-2:#c5dcc0; --gnd-3:#a8c9a0; --gnd-4:#7faa76; --gnd-5:#5a8a52;
+  --cloud:#ffffff; --star:#fffbe6;
+  --overlay:rgba(58,74,52,.5);
+}
+/* 黄昏 */
+body.dusk{
+  --sage-1:#f0e0d0; --sage-2:#e0c4a8; --sage-3:#c9a878; --sage-4:#b08858; --sage-5:#8a6838;
+  --cream-1:#fdf0e2; --cream-2:#f5e0c8; --cream-3:#ebd0a8;
+  --pink-1:#fbe0d0; --pink-2:#f2b890; --pink-3:#e89060;
+  --gold:#e8c070; --outline:#5a4228; --ink:#4a3420;
+  --sky-top:#f8d8b0; --sky-mid:#f0b890; --sky-bot:#e89878;
+  --gnd-1:#e8d0b0; --gnd-2:#d0a878; --gnd-3:#b08858; --gnd-4:#906838; --gnd-5:#6a4820;
+  --cloud:#fff0d8; --star:#fff0c0;
+  --overlay:rgba(74,52,32,.5);
+}
+/* 夜晚 */
+body.night{
+  --sage-1:#3a4a5a; --sage-2:#2e3a4a; --sage-3:#243040; --sage-4:#1a2430; --sage-5:#121a24;
+  --cream-1:#2a3444; --cream-2:#222c3a; --cream-3:#1a2230;
+  --pink-1:#4a3a5a; --pink-2:#6a4a7a; --pink-3:#8a6a9a;
+  --gold:#d8c070; --outline:#6a7a8a; --ink:#d8e0e8;
+  --sky-top:#1a1e3a; --sky-mid:#222848; --sky-bot:#2a3058;
+  --gnd-1:#1e2838; --gnd-2:#16202e; --gnd-3:#101822; --gnd-4:#0a1018; --gnd-5:#060a10;
+  --cloud:#4a5068; --star:#fff8c0;
+  --overlay:rgba(10,16,24,.6);
+}
+
+/* ============ 背景天空 ============ */
+.sky{position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 45%,var(--sky-bot) 100%);transition:background 1.2s ease}
+.cloud{position:absolute;image-rendering:pixelated;opacity:.85;animation:drift linear infinite}
+@keyframes drift{from{transform:translateX(-20vw)}to{transform:translateX(120vw)}}
+.cloud svg{display:block;width:100%;height:100%}
+
+/* 月亮/太阳（夜晚显示月亮） */
+.celestial{position:fixed;top:8%;right:12%;width:60px;height:60px;z-index:1;opacity:.8;transition:opacity 1s}
+body.night .celestial{opacity:1}
+body:not(.night) .celestial{opacity:0}
+
+/* 像素草地 */
+.ground{
+  position:fixed;left:0;right:0;bottom:0;height:28vh;z-index:1;
+  background:repeating-linear-gradient(90deg,var(--gnd-2) 0 8px,var(--gnd-1) 8px 16px);
+  border-top:6px solid var(--gnd-4);
+  box-shadow:inset 0 6px 0 var(--gnd-3);
+  transition:background 1.2s,border-color 1.2s;
+}
+.ground::before{
+  content:'';position:absolute;top:-6px;left:0;right:0;height:6px;
+  background:repeating-linear-gradient(90deg,var(--gnd-5) 0 4px,transparent 4px 12px);
+}
+
+/* 闪烁星星（夜晚更密更亮） */
+.star{position:absolute;width:4px;height:4px;background:var(--star);box-shadow:0 0 6px var(--star),0 0 12px var(--gold);animation:twinkle 2s ease-in-out infinite;transition:opacity 1s}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(.6)}50%{opacity:1;transform:scale(1.2)}}
+
+/* ============ CRT 扫描线 ============ */
+.crt{position:fixed;inset:0;z-index:100;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.04) 0 2px,transparent 2px 4px);mix-blend-mode:multiply}
+.crt::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.12) 100%)}
+
+/* ============ 自定义像素光标 ============ */
+.cursor{position:fixed;width:20px;height:20px;z-index:9999;pointer-events:none;transform:translate(-2px,-2px);transition:transform .1s}
+.cursor.click{transform:translate(-2px,-2px) scale(.7)}
+
+/* ============ 标题区 ============ */
+.header{position:relative;z-index:10;text-align:center;padding-top:6vh}
+.title-pixel{font-family:'Press Start 2P','ZCOOL KuaiLe','Microsoft YaHei',sans-serif;font-size:clamp(18px,3.2vw,34px);color:var(--ink);letter-spacing:4px;text-shadow:3px 3px 0 var(--sage-3),6px 6px 0 var(--pink-2);animation:titleBounce 3s ease-in-out infinite;transition:color 1.2s}
+@keyframes titleBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.subtitle{margin-top:14px;font-size:clamp(13px,1.6vw,18px);color:var(--sage-5);letter-spacing:4px;opacity:.8;transition:color 1.2s}
+.subtitle .dot{display:inline-block;width:8px;height:8px;background:var(--pink-3);margin:0 8px;vertical-align:middle;animation:blink 1.4s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ============ 右上角控制面板 ============ */
+.controls{
+  position:fixed;top:14px;right:14px;z-index:60;
+  display:flex;flex-direction:column;gap:8px;align-items:flex-end;
+}
+.ctrl-row{display:flex;gap:6px;align-items:center}
+.ctrl-btn{
+  width:36px;height:36px;background:var(--cream-1);border:3px solid var(--outline);
+  border-radius:5px;font-size:16px;color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:2px 2px 0 var(--outline);transition:all .1s;
+}
+.ctrl-btn:hover{background:var(--pink-1);transform:translate(1px,1px);box-shadow:1px 1px 0 var(--outline)}
+.ctrl-btn:active{transform:translate(2px,2px);box-shadow:none}
+.ctrl-btn.active{background:var(--gold)}
+.vol-wrap{
+  display:flex;align-items:center;gap:6px;background:var(--cream-1);
+  border:3px solid var(--outline);border-radius:5px;padding:4px 8px;
+  box-shadow:2px 2px 0 var(--outline);
+}
+.vol-wrap label{font-size:14px;color:var(--ink)}
+.vol-wrap input[type=range]{
+  -webkit-appearance:none;appearance:none;width:80px;height:6px;
+  background:var(--sage-2);border:2px solid var(--outline);border-radius:3px;outline:none;
+}
+.vol-wrap input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:14px;height:14px;background:var(--pink-3);
+  border:2px solid var(--outline);border-radius:3px;cursor:pointer;
+}
+.vol-wrap input[type=range]::-moz-range-thumb{width:14px;height:14px;background:var(--pink-3);border:2px solid var(--outline);border-radius:3px;cursor:pointer;border:none}
+
+/* ============ 图标网格 ============ */
+.icon-grid{position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:clamp(10px,1.6vh,24px);max-width:1280px;margin:5vh auto 0;padding:0 3vw}
+.icon-row{display:flex;justify-content:center;gap:clamp(8px,1.4vw,20px);flex-wrap:wrap}
+.icon-card{
+  position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;
+  padding:16px 6px 12px;background:var(--cream-1);
+  border:4px solid var(--outline);border-radius:6px;
+  box-shadow:4px 4px 0 var(--outline),inset 0 0 0 2px var(--cream-2);
+  cursor:pointer;transition:transform .15s,box-shadow .15s;
+  animation:floatIdle 4s ease-in-out infinite;
+}
+.icon-card:nth-child(2){animation-delay:.3s}
+.icon-card:nth-child(3){animation-delay:.6s}
+.icon-card:nth-child(4){animation-delay:.9s}
+.icon-card:nth-child(5){animation-delay:1.2s}
+.icon-card:nth-child(6){animation-delay:1.5s}
+@keyframes floatIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.icon-card:hover{transform:translateY(-10px) scale(1.06);box-shadow:4px 4px 0 var(--outline),6px 10px 0 rgba(74,90,66,.3),inset 0 0 0 2px var(--cream-2),0 0 20px var(--pink-2);z-index:20}
+.icon-card:hover .pixel-icon{filter:drop-shadow(0 0 6px var(--gold))}
+.icon-card:active{transform:translateY(-2px) scale(.98)}
+.pixel-icon{width:clamp(44px,6vw,64px);height:clamp(44px,6vw,64px);display:flex;align-items:center;justify-content:center;transition:filter .2s}
+.pixel-icon svg{width:100%;height:100%}
+.icon-label{font-size:clamp(11px,1.3vw,15px);color:var(--ink);letter-spacing:1px;white-space:nowrap}
+.sparkle{position:absolute;width:6px;height:6px;background:var(--gold);opacity:0;pointer-events:none}
+.icon-card:hover .sparkle{animation:sparkleFly .8s ease-out forwards}
+.icon-card .sparkle:nth-child(1){top:10%;left:20%;animation-delay:0s}
+.icon-card .sparkle:nth-child(2){top:20%;right:15%;animation-delay:.15s}
+.icon-card .sparkle:nth-child(3){bottom:30%;left:10%;animation-delay:.3s}
+.icon-card .sparkle:nth-child(4){bottom:15%;right:20%;animation-delay:.45s}
+@keyframes sparkleFly{0%{opacity:0;transform:translate(0,0) scale(0)}30%{opacity:1;transform:translate(var(--tx,10px),var(--ty,-10px)) scale(1)}100%{opacity:0;transform:translate(calc(var(--tx,10px)*2),calc(var(--ty,-10px)*2)) scale(0)}}
+
+/* ============ 弹窗 ============ */
+.modal-overlay{position:fixed;inset:0;z-index:50;display:none;background:var(--overlay);backdrop-filter:blur(2px);align-items:center;justify-content:center}
+.modal-overlay.show{display:flex;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{position:relative;width:min(560px,86vw);max-height:78vh;overflow:auto;background:var(--cream-1);border:5px solid var(--outline);border-radius:8px;box-shadow:8px 8px 0 var(--outline),0 0 0 4px var(--cream-2) inset;animation:modalPop .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes modalPop{from{transform:scale(.6) rotate(-3deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--sage-2);border-bottom:4px solid var(--outline)}
+.modal-title{font-family:'Press Start 2P','ZCOOL KuaiLe',sans-serif;font-size:14px;color:var(--ink)}
+.modal-close{width:32px;height:32px;background:var(--pink-2);border:3px solid var(--outline);border-radius:4px;font-family:'Press Start 2P',monospace;font-size:14px;color:var(--ink);display:flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 var(--outline);transition:all .1s}
+.modal-close:hover{background:var(--pink-3);transform:translate(1px,1px);box-shadow:1px 1px 0 var(--outline)}
+.modal-close:active{transform:translate(2px,2px);box-shadow:none}
+.modal-body{padding:24px 22px;min-height:200px}
+.placeholder{text-align:center;color:var(--sage-5);font-size:16px;line-height:2}
+.placeholder .big{font-size:42px;margin-bottom:12px;display:block;animation:wobble 2s ease-in-out infinite}
+@keyframes wobble{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+
+/* 音乐模块曲目列表 */
+.track-list{display:flex;flex-direction:column;gap:10px}
+.track-item{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;
+  background:var(--cream-2);border:3px solid var(--outline);border-radius:6px;
+  cursor:pointer;transition:all .15s;
+}
+.track-item:hover{background:var(--sage-1);transform:translateX(4px)}
+.track-item.playing{background:var(--sage-2);box-shadow:inset 0 0 0 2px var(--gold)}
+.track-icon{font-size:22px;width:30px;text-align:center}
+.track-info{flex:1}
+.track-name{font-size:15px;color:var(--ink);font-weight:bold}
+.track-desc{font-size:12px;color:var(--sage-5);margin-top:2px}
+.track-state{font-size:18px}
+
+/* ============ 关于我 / 擅长领域 / 成果 模块 ============ */
+.info-card{background:var(--cream-2);border:3px solid var(--outline);border-radius:8px;padding:16px 18px;margin-bottom:14px}
+.info-name{font-size:20px;color:var(--ink);font-weight:bold;margin-bottom:4px}
+.info-tag{display:inline-block;background:var(--sage-2);border:2px solid var(--outline);border-radius:4px;padding:2px 10px;font-size:12px;color:var(--ink);margin:6px 6px 0 0}
+.info-desc{font-size:14px;color:var(--sage-5);line-height:1.8;margin-top:12px}
+.info-list{list-style:none;margin-top:10px}
+.info-list li{font-size:14px;color:var(--ink);line-height:1.9;padding-left:18px;position:relative}
+.info-list li::before{content:'✦';position:absolute;left:0;color:var(--sage-4)}
+
+.skill-group{margin-bottom:16px}
+.skill-group-title{font-size:15px;color:var(--ink);font-weight:bold;margin-bottom:8px;padding-left:8px;border-left:4px solid var(--sage-4)}
+.skill-tags{display:flex;flex-wrap:wrap;gap:8px}
+.skill-tag{background:var(--sage-1);border:2px solid var(--outline);border-radius:5px;padding:5px 12px;font-size:13px;color:var(--ink);transition:all .15s}
+.skill-tag:hover{background:var(--sage-2);transform:translateY(-2px)}
+
+.achievement-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--cream-2);border:3px solid var(--outline);border-radius:6px;margin-bottom:10px;transition:all .15s}
+.achievement-item:hover{background:var(--sage-1);transform:translateX(4px)}
+.achievement-icon{font-size:22px;flex-shrink:0}
+.achievement-body{flex:1}
+.achievement-title{font-size:14px;color:var(--ink);font-weight:bold}
+.achievement-year{font-size:12px;color:var(--sage-5);margin-top:2px}
+
+/* ============ 小游戏模块 ============ */
+.game-select{display:flex;flex-direction:column;gap:14px}
+.game-card{display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--cream-2);border:3px solid var(--outline);border-radius:8px;cursor:pointer;transition:all .15s}
+.game-card:hover{background:var(--sage-1);transform:translateX(4px)}
+.game-card-icon{font-size:36px;width:50px;text-align:center;flex-shrink:0}
+.game-card-info{flex:1}
+.game-card-title{font-size:16px;color:var(--ink);font-weight:bold}
+.game-card-desc{font-size:12px;color:var(--sage-5);margin-top:2px}
+.game-card-score{font-size:12px;color:var(--sage-4);white-space:nowrap}
+
+.game-wrap{display:flex;flex-direction:column;align-items:center;gap:10px}
+.game-hud{display:flex;justify-content:space-between;align-items:center;width:100%;padding:0 4px}
+.game-hud .score{font-size:14px;color:var(--ink);font-weight:bold}
+.game-hud .high-score{font-size:12px;color:var(--sage-5)}
+.game-canvas{background:var(--cream-1);border:4px solid var(--outline);border-radius:6px;image-rendering:pixelated;box-shadow:4px 4px 0 var(--outline)}
+.game-tip{font-size:12px;color:var(--sage-5);text-align:center}
+.game-over-lay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(58,74,52,.7);border-radius:6px;color:#fff;font-size:16px;gap:8px}
+.game-over-lay .big{font-size:22px;font-weight:bold}
+.game-btn{padding:8px 18px;background:var(--sage-2);border:3px solid var(--outline);border-radius:5px;font-family:inherit;font-size:14px;color:var(--ink);box-shadow:3px 3px 0 var(--outline);transition:all .1s}
+.game-btn:hover{background:var(--sage-3);transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--outline)}
+.game-btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--outline)}
+.game-canvas-box{position:relative}
+
+
+.hint{position:fixed;bottom:3vh;left:50%;transform:translateX(-50%);z-index:10;font-size:13px;color:var(--sage-5);letter-spacing:2px;opacity:.7;transition:color 1.2s}
+.hint .arrow{display:inline-block;animation:nudge 1.2s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* ============ 页面宠物 ============ */
+.pet{
+  position:fixed;bottom:28vh;z-index:6;
+  width:clamp(48px,6vw,72px);height:clamp(48px,6vw,72px);
+  cursor:pointer;transition:transform .1s;
+  filter:drop-shadow(2px 4px 2px rgba(0,0,0,.25));
+}
+.pet img{width:100%;height:100%;object-fit:contain;image-rendering:auto}
+.pet.jump{animation:petJump .4s ease-out}
+@keyframes petJump{0%{transform:translateY(0) scaleX(var(--sx,1))}40%{transform:translateY(-50px) scaleX(var(--sx,1))}100%{transform:translateY(0) scaleX(var(--sx,1))}}
+.pet.red-flash img{animation:redFlash .25s ease}
+@keyframes redFlash{0%,100%{filter:none}50%{filter:brightness(0.6) sepia(1) saturate(8) hue-rotate(-30deg)}}
+.pet.hurt{animation:petHurt .3s}
+@keyframes petHurt{0%,100%{filter:drop-shadow(2px 4px 2px rgba(0,0,0,.25))}50%{filter:drop-shadow(2px 4px 2px rgba(0,0,0,.25)) brightness(0.5) sepia(1) hue-rotate(-50deg) saturate(6)}}
+
+/* 宠物对话气泡（出现在宠物右上角） */
+.pet-bubble{
+  position:fixed;
+  background:var(--cream-1);border:3px solid var(--outline);border-radius:12px;
+  padding:6px 12px;white-space:nowrap;font-size:14px;color:var(--ink);
+  box-shadow:2px 2px 0 var(--outline);opacity:0;pointer-events:none;
+  transition:opacity .2s;z-index:8;
+}
+.pet-bubble::after{
+  content:'';position:absolute;top:100%;left:14px;
+  border:8px solid transparent;border-top-color:var(--cream-1);
+}
+.pet-bubble::before{
+  content:'';position:absolute;top:100%;left:12px;
+  border:10px solid transparent;border-top-color:var(--outline);margin-top:-2px;z-index:-1;
+}
+.pet-bubble.show{opacity:1;animation:bubblePop .25s ease-out}
+@keyframes bubblePop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* 爆炸效果 */
+.explosion{position:fixed;z-index:9990;pointer-events:none;border-radius:50%}
+.explosion .ring{position:absolute;inset:0;border-radius:50%;border:4px solid #ff8800;animation:expRing .5s ease-out forwards}
+.explosion .core{position:absolute;inset:20%;border-radius:50%;background:radial-gradient(circle,#fff 0%,#ffdd00 40%,#ff6600 100%);animation:expCore .5s ease-out forwards}
+@keyframes expRing{0%{transform:scale(.2);opacity:1}100%{transform:scale(4);opacity:0}}
+@keyframes expCore{0%{transform:scale(2);opacity:1}100%{transform:scale(.1);opacity:0}}
+.exp-particle{position:fixed;width:8px;height:8px;background:#ffaa00;z-index:9991;pointer-events:none;border-radius:50%}
+
+/* 宠物选择列表 */
+.pet-list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.pet-item{
+  display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px;
+  background:var(--cream-2);border:3px solid var(--outline);border-radius:8px;
+  cursor:pointer;transition:all .15s;
+}
+.pet-item:hover{background:var(--sage-1);transform:translateY(-3px)}
+.pet-item.active{background:var(--sage-2);box-shadow:inset 0 0 0 3px var(--gold)}
+.pet-thumb{width:56px;height:56px;object-fit:contain}
+.pet-name{font-size:14px;color:var(--ink);font-weight:bold}
+
+/* ============ 小牧场 ============ */
+.ranch-wrap{position:relative;width:100%;height:340px;border-radius:12px;overflow:hidden;border:3px solid var(--outline);box-shadow:inset 0 0 0 2px #b5895a}
+.ranch-grass{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,#9cc49c 0%,#7faa76 60%,#6a9560 100%);
+}
+/* 草地点缀 */
+.ranch-grass::before{content:'';position:absolute;inset:0;background-image:
+  radial-gradient(circle,#5a8a50 1px,transparent 1px),
+  radial-gradient(circle,#6a9560 1.5px,transparent 1.5px);
+  background-size:18px 18px,28px 28px;background-position:0 0,9px 14px;opacity:.5}
+/* 栅栏 */
+.ranch-fence{position:absolute;inset:0;pointer-events:none;z-index:5}
+.fence-post{position:absolute;width:8px;height:26px;background:#c9a85a;border:2px solid var(--outline);border-radius:2px}
+.fence-rail{position:absolute;height:6px;background:#c9a85a;border:2px solid var(--outline);border-radius:2px}
+.fence-corner{position:absolute;width:10px;height:10px;background:#b5895a;border:2px solid var(--outline);border-radius:2px;z-index:6}
+
+/* 牧场猪 */
+.ranch-pig{
+  position:absolute;z-index:4;width:64px;height:64px;
+  transition:left .35s cubic-bezier(.34,1.56,.64,1), top .35s cubic-bezier(.34,1.56,.64,1);
+  filter:drop-shadow(2px 4px 2px rgba(0,0,0,.25));
+  cursor:pointer;
+}
+.ranch-pig img{width:100%;height:100%;object-fit:contain}
+.ranch-pig.bouncing{animation:pigBounce .5s ease-in-out infinite}
+@keyframes pigBounce{0%,100%{transform:scaleY(1) scaleX(1) translateY(0)}30%{transform:scaleY(.8) scaleX(1.1) translateY(2px)}60%{transform:scaleY(1.1) scaleX(.9) translateY(-6px)}}
+.ranch-pig.fat{width:84px;height:84px;animation:pigFatBounce .45s ease-in-out infinite}
+@keyframes pigFatBounce{0%,100%{transform:scaleY(1) scaleX(1) translateY(0)}30%{transform:scaleY(.85) scaleX(1.08) translateY(2px)}60%{transform:scaleY(1.08) scaleX(.92) translateY(-5px)}}
+
+/* 饲料槽 */
+.ranch-trough{
+  position:absolute;z-index:3;width:70px;height:34px;bottom:18px;right:30px;
+  cursor:pointer;
+}
+.trough-base{
+  position:absolute;bottom:0;left:0;right:0;height:24px;
+  background:#a87d4a;border:3px solid var(--outline);border-radius:0 0 10px 10px;
+  box-shadow:inset 0 -4px 0 #8a6538;
+}
+.trough-rim{
+  position:absolute;top:0;left:-4px;right:-4px;height:10px;
+  background:#c9a85a;border:3px solid var(--outline);border-radius:6px;
+}
+.trough-wheat{
+  position:absolute;width:28px;height:28px;display:none;pointer-events:none;
+}
+.trough-wheat.show{display:block;animation:wheatBob 1s ease-in-out infinite}
+@keyframes wheatBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+
+/* 牧场右侧按钮 */
+.ranch-btns{display:flex;flex-direction:column;gap:10px;width:72px;justify-content:center}
+.ranch-btn{
+  background:var(--cream-1);border:3px solid var(--outline);border-radius:10px;
+  padding:10px 4px;font-size:12px;color:var(--ink);cursor:pointer;line-height:1.4;
+  box-shadow:2px 2px 0 var(--outline);transition:all .12s;font-weight:bold;
+}
+.ranch-btn:hover{background:var(--sage-1);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--outline)}
+.ranch-btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--outline)}
+.ranch-btn.del-btn{background:#fbe0e0}
+.ranch-btn.del-btn:hover{background:#f5c8c8}
+
+/* 吃饲料粒子 */
+.eat-particle{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:6}
+
+/* 牧场提示气泡 */
+.ranch-bubble{
+  position:absolute;z-index:7;background:var(--cream-1);border:3px solid var(--outline);
+  border-radius:10px;padding:5px 10px;font-size:13px;color:var(--ink);
+  box-shadow:2px 2px 0 var(--outline);opacity:0;pointer-events:none;transition:opacity .2s;
+  white-space:nowrap;
+}
+.ranch-bubble.show{opacity:1;animation:bubblePop .25s ease-out}
+.ranch-bubble::after{content:'';position:absolute;top:100%;left:20px;border:7px solid transparent;border-top-color:var(--cream-1)}
+
+/* ============ 响应式 ============ */
+@media(max-width:560px){.icon-row{gap:8px}}
+</style>
+</head>
+<body>
+
+<!-- 背景层 -->
+<div class="sky" id="sky"></div>
+<div class="ground"></div>
+<div class="celestial" id="celestial"></div>
+
+<!-- 页面宠物 -->
+<div class="pet" id="pet"></div>
+<div class="pet-bubble" id="petBubble"></div>
+
+<!-- 右上角控制面板 -->
+<div class="controls">
+  <div class="ctrl-row">
+    <div class="vol-wrap">
+      <label id="volLabel">🎵</label>
+      <input type="range" id="volSlider" min="0" max="100" value="30">
+    </div>
+    <button class="ctrl-btn" id="muteBtn" title="静音">🔊</button>
+  </div>
+  <div class="ctrl-row">
+    <button class="ctrl-btn" id="themeBtn" title="切换主题">☀️</button>
+    <span id="themeLabel" style="font-size:12px;color:var(--ink);background:var(--cream-1);padding:3px 8px;border:2px solid var(--outline);border-radius:4px">白天</span>
+  </div>
+</div>
+
+<!-- 标题 -->
+<header class="header">
+  <h1 class="title-pixel">坤 的 个 人 牧 场</h1>
+  <p class="subtitle">欢 迎 来 到 我 的 世 界<span class="dot"></span>点 击 图 标 探 索</p>
+</header>
+
+<!-- 图标网格 -->
+<nav class="icon-grid" id="iconGrid"></nav>
+
+<!-- 底部提示 -->
+<div class="hint">移 动 鼠 标 · 悬 停 图 标 · 点 击 打 开 <span class="arrow">▲</span></div>
+
+<!-- 弹窗 -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">模块</span>
+      <button class="modal-close" id="modalClose">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- CRT 扫描线 -->
+<div class="crt"></div>
+
+<!-- 自定义光标 -->
+<div class="cursor" id="cursor"></div>
+
+<script>
+/* ============ 像素图标 SVG ============ */
+const ICONS = {
+  about: { name:'关于我', emoji:'🌸', svg:`<svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+    <rect x="6" y="1" width="4" height="1" fill="#7faa76"/><rect x="5" y="2" width="6" height="1" fill="#7faa76"/>
+    <rect x="5" y="3" width="6" height="2" fill="#9cc49c"/><rect x="4" y="3" width="1" height="3" fill="#7faa76"/>
+    <rect x="11" y="3" width="1" height="3" fill="#7faa76"/><rect x="6" y="5" width="4" height="3" fill="#fbe4c8"/>
+    <rect x="5" y="5" width="1" height="3" fill="#9cc49c"/><rect x="10" y="5" width="1" height="3" fill="#9cc49c"/>
+    <rect x="6" y="8" width="4" height="1" fill="#7faa76"/><rect x="5" y="9" width="6" height="4" fill="#faf6f0"/>
+    <rect x="4" y="9" width="1" height="3" fill="#9cc49c"/><rect x="11" y="9" width="1" height="3" fill="#9cc49c"/>
+    <rect x="5" y="13" width="2" height="2" fill="#fbe4c8"/><rect x="9" y="13" width="2" height="2" fill="#fbe4c8"/>
+    <rect x="6" y="6" width="1" height="1" fill="#3a4a34"/><rect x="9" y="6" width="1" height="1" fill="#3a4a34"/>
+    <rect x="7" y="7" width="2" height="1" fill="#e8a8a8"/>
+  </svg>`},
+  skills: { name:'擅长领域', emoji:'⭐', svg:`<svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+    <rect x="7" y="1" width="2" height="2" fill="#e8d090"/><rect x="6" y="3" width="4" height="2" fill="#f0dc9a"/>
+    <rect x="1" y="5" width="14" height="2" fill="#e8d090"/><rect x="2" y="5" width="12" height="1" fill="#f5e6b0"/>
+    <rect x="3" y="7" width="10" height="2" fill="#f0dc9a"/><rect x="4" y="9" width="3" height="2" fill="#e8d090"/>
+    <rect x="9" y="9" width="3" height="2" fill="#e8d090"/><rect x="4" y="11" width="2" height="2" fill="#d4b870"/>
+    <rect x="10" y="11" width="2" height="2" fill="#d4b870"/><rect x="7" y="6" width="2" height="1" fill="#fff8e0"/>
+    <rect x="3" y="4" width="1" height="1" fill="#fff8e0"/><rect x="12" y="4" width="1" height="1" fill="#fff8e0"/>
+  </svg>`},
+  achievements: { name:'成果', emoji:'🏆', svg:`<svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+    <rect x="4" y="1" width="8" height="1" fill="#d4b870"/><rect x="3" y="2" width="10" height="1" fill="#e8d090"/>
+    <rect x="3" y="3" width="2" height="4" fill="#c9a85a"/><rect x="11" y="3" width="2" height="4" fill="#c9a85a"/>
+    <rect x="5" y="3" width="6" height="5" fill="#e8d090"/><rect x="5" y="3" width="6" height="1" fill="#f5e6b0"/>
+    <rect x="2" y="4" width="1" height="2" fill="#d4b870"/><rect x="13" y="4" width="1" height="2" fill="#d4b870"/>
+    <rect x="6" y="8" width="4" height="2" fill="#c9a85a"/><rect x="5" y="10" width="6" height="1" fill="#d4b870"/>
+    <rect x="4" y="11" width="8" height="2" fill="#e8d090"/><rect x="4" y="13" width="2" height="2" fill="#c9a85a"/>
+    <rect x="10" y="13" width="2" height="2" fill="#c9a85a"/><rect x="7" y="5" width="2" height="2" fill="#fff8e0"/>
+  </svg>`},
+  games: { name:'小游戏', emoji:'🎮', svg:`<svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+    <rect x="2" y="5" width="12" height="6" fill="#7faa76"/><rect x="2" y="5" width="12" height="1" fill="#9cc49c"/>
+    <rect x="3" y="4" width="10" height="1" fill="#7faa76"/><rect x="1" y="6" width="1" height="4" fill="#7faa76"/>
+    <rect x="14" y="6" width="1" height="4" fill="#7faa76"/><rect x="2" y="11" width="12" height="1" fill="#5a8a52"/>
+    <rect x="3" y="12" width="2" height="1" fill="#5a8a52"/><rect x="11" y="12" width="2" height="1" fill="#5a8a52"/>
+    <rect x="4" y="7" width="1" height="2" fill="#faf6f0"/><rect x="3" y="8" width="3" height="1" fill="#faf6f0"/>
+    <rect x="10" y="7" width="1" height="1" fill="#e8a8a8"/><rect x="12" y="7" width="1" height="1" fill="#f0dc9a"/>
+    <rect x="10" y="9" width="1" height="1" fill="#a8c9a0"/><rect x="12" y="9" width="1" height="1" fill="#9cc4e0"/>
+  </svg>`},
+  music: { name:'页面音乐', emoji:'🎵', svg:`<svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+    <rect x="7" y="2" width="2" height="8" fill="#e8d090"/><rect x="6" y="2" width="1" height="2" fill="#f0dc9a"/>
+    <rect x="9" y="3" width="4" height="2" fill="#e8a8a8"/><rect x="9" y="2" width="4" height="1" fill="#f2c8c8"/>
+    <rect x="7" y="10" width="4" height="3" fill="#7faa76"/><rect x="6" y="11" width="1" height="2" fill="#5a8a52"/>
+    <rect x="11" y="11" width="1" height="2" fill="#5a8a52"/><rect x="7" y="12" width="4" height="1" fill="#5a8a52"/>
+  </svg>`},
+  ranch: { name:'小牧场', emoji:'🐄', svg:`<svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+    <rect x="1" y="12" width="14" height="3" fill="#7faa76"/><rect x="1" y="12" width="14" height="1" fill="#9cc49c"/>
+    <rect x="4" y="6" width="8" height="6" fill="#faf6f0"/><rect x="4" y="6" width="8" height="1" fill="#e8dcc8"/>
+    <rect x="3" y="7" width="1" height="5" fill="#c9a85a"/><rect x="12" y="7" width="1" height="5" fill="#c9a85a"/>
+    <rect x="5" y="3" width="6" height="3" fill="#e8a8a8"/><rect x="6" y="2" width="4" height="1" fill="#e8a8a8"/>
+    <rect x="7" y="1" width="2" height="1" fill="#e8a8a8"/><rect x="6" y="9" width="2" height="3" fill="#c9a85a"/>
+    <rect x="9" y="9" width="2" height="3" fill="#c9a85a"/><rect x="5" y="7" width="1" height="1" fill="#3a4a34"/>
+    <rect x="10" y="7" width="1" height="1" fill="#3a4a34"/><rect x="7" y="8" width="2" height="1" fill="#e8a8a8"/>
+    <rect x="12" y="3" width="2" height="2" fill="#f0dc9a"/><rect x="13" y="2" width="1" height="1" fill="#f0dc9a"/>
+  </svg>`},
+  pet: { name:'页面宠物', emoji:'🐾', svg:`<svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+    <rect x="5" y="1" width="6" height="2" fill="#7faa76"/><rect x="4" y="3" width="8" height="4" fill="#9cc49c"/>
+    <rect x="4" y="7" width="8" height="1" fill="#7faa76"/><rect x="3" y="8" width="10" height="4" fill="#faf6f0"/>
+    <rect x="4" y="12" width="3" height="2" fill="#fbe4c8"/><rect x="9" y="12" width="3" height="2" fill="#fbe4c8"/>
+    <rect x="6" y="4" width="1" height="2" fill="#3a4a34"/><rect x="9" y="4" width="1" height="2" fill="#3a4a34"/>
+    <rect x="7" y="6" width="2" height="1" fill="#e8a8a8"/><rect x="2" y="2" width="2" height="3" fill="#e8a8a8"/>
+    <rect x="12" y="2" width="2" height="3" fill="#e8a8a8"/>
+  </svg>`}
+};
+
+/* ============ 音频引擎（Web Audio API） ============ */
+const Audio = {
+  ctx:null, masterGain:null, musicGain:null, sfxGain:null,
+  muted:false, volume:0.3, currentTrack:1, bgmNodes:[], bgmTimer:null, started:false,
+
+  init(){
+    if(this.ctx) return;
+    this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.gain.value = this.muted ? 0 : this.volume;
+    this.masterGain.connect(this.ctx.destination);
+    this.musicGain = this.ctx.createGain();
+    this.musicGain.gain.value = 0.5;
+    this.musicGain.connect(this.masterGain);
+    this.sfxGain = this.ctx.createGain();
+    this.sfxGain.gain.value = 0.8;
+    this.sfxGain.connect(this.masterGain);
+  },
+  resume(){ if(this.ctx && this.ctx.state==='suspended') this.ctx.resume(); },
+
+  /* 点击音效：柔和的"啵"声 */
+  playClick(){
+    if(!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, t);
+    osc.frequency.exponentialRampToValueAtTime(440, t+0.08);
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.15);
+    osc.connect(g); g.connect(this.sfxGain);
+    osc.start(t); osc.stop(t+0.16);
+  },
+
+  /* 背景音乐曲目（3 首，风格差异明显） */
+  /* style: pad=柔和铺底, arpeggio=琶音, chiptune=8-bit, melody=旋律+贝斯 */
+  tracks:[
+    { name:'牧场清晨', desc:'三角波琶音·清新明亮', icon:'🌅', style:'arpeggio', wave:'triangle',
+      chords:[[523.25,659.25,783.99],[587.33,698.46,880.00],[523.25,659.25,783.99],[659.25,783.99,987.77]], bpm:104 },
+    { name:'星空夜曲', desc:'正弦波铺底·梦幻空灵', icon:'🌌', style:'pad', wave:'sine',
+      chords:[[220.00,261.63,329.63],[196.00,246.94,293.66],[174.61,220.00,261.63],[196.00,246.94,293.66]], bpm:48 },
+    { name:'黄昏漫步', desc:'锯齿波旋律+贝斯·温暖慵懒', icon:'🌇', style:'melody', wave:'sawtooth',
+      melody:[659.25,587.33,523.25,587.33,659.25,783.99,659.25,523.25], bass:[130.81,110.00,98.00,110.00], bpm:72 }
+  ],
+
+  playTrack(idx){
+    this.stopBGM();
+    this.currentTrack = idx;
+    const track = this.tracks[idx];
+    const beat = 60/track.bpm;
+    let step = 0;
+    const tick = () => {
+      if(!this.ctx) return;
+      const t = this.ctx.currentTime;
+      if(track.style === 'pad'){
+        const chord = track.chords[step % track.chords.length];
+        chord.forEach(freq => this._note(freq, t, beat*8, 0.045, track.wave, 1.5));
+        step++;
+      } else if(track.style === 'arpeggio'){
+        const chord = track.chords[Math.floor(step/3) % track.chords.length];
+        const note = chord[step % chord.length];
+        this._note(note, t, beat*0.9, 0.07, track.wave, 0.05);
+        step++;
+      } else if(track.style === 'chiptune'){
+        const chord = track.chords[Math.floor(step/4) % track.chords.length];
+        if(step % 4 === 0){
+          this._note(chord[0]/2, t, beat*3.5, 0.08, 'square', 0.05);
+        }
+        const note = chord[step % chord.length];
+        this._note(note, t, beat*0.8, 0.06, track.wave, 0.04);
+        step++;
+      } else if(track.style === 'melody'){
+        if(step % 2 === 0){
+          const b = track.bass[(step/2) % track.bass.length];
+          this._note(b, t, beat*1.8, 0.06, 'sine', 0.15);
+        }
+        const m = track.melody[step % track.melody.length];
+        this._note(m, t, beat*0.7, 0.05, track.wave, 0.06);
+        step++;
+      }
+    };
+    const interval = track.style==='pad' ? beat*8*1000 : beat*1000;
+    tick();
+    this.bgmTimer = setInterval(tick, interval);
+  },
+
+  /* 单个音符：freq 频率, start 起始, dur 时长, vol 音量, wave 波形, attack 起音 */
+  _note(freq, start, dur, vol, wave, attack){
+    if(!this.ctx) return;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = wave;
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(vol, start+attack);
+    g.gain.setValueAtTime(vol, start+dur-attack);
+    g.gain.linearRampToValueAtTime(0, start+dur);
+    osc.connect(g); g.connect(this.musicGain);
+    osc.start(start); osc.stop(start+dur+0.05);
+    this.bgmNodes.push(osc);
+  },
+  stopBGM(){
+    if(this.bgmTimer){ clearInterval(this.bgmTimer); this.bgmTimer=null; }
+    this.bgmNodes.forEach(o=>{try{o.stop()}catch(e){}});
+    this.bgmNodes = [];
+  },
+  setVolume(v){
+    this.volume = v;
+    if(this.masterGain) this.masterGain.gain.value = this.muted ? 0 : v;
+  },
+  setMuted(m){
+    this.muted = m;
+    if(this.masterGain) this.masterGain.gain.value = m ? 0 : this.volume;
+  }
+};
+
+/* ============ 渲染图标网格（分两行） ============ */
+const grid = document.getElementById('iconGrid');
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modalTitle');
+const modalBody = document.getElementById('modalBody');
+
+// 第一行：关于我、擅长领域、成果
+// 第二行：小游戏、页面音乐、小牧场、页面宠物
+const row1Keys = ['about','skills','achievements'];
+const row2Keys = ['games','music','ranch','pet'];
+
+function createIconCard(key, data){
+  const card = document.createElement('div');
+  card.className = 'icon-card';
+  card.dataset.key = key;
+  card.innerHTML = `
+    <span class="sparkle" style="--tx:-12px;--ty:-12px"></span>
+    <span class="sparkle" style="--tx:14px;--ty:-10px"></span>
+    <span class="sparkle" style="--tx:-10px;--ty:12px"></span>
+    <span class="sparkle" style="--tx:12px;--ty:14px"></span>
+    <div class="pixel-icon">${data.svg}</div>
+    <div class="icon-label">${data.name}</div>
+  `;
+  card.addEventListener('click', () => openModal(key, data));
+  return card;
+}
+
+const row1 = document.createElement('div');
+row1.className = 'icon-row';
+row1Keys.forEach(k => row1.appendChild(createIconCard(k, ICONS[k])));
+
+const row2 = document.createElement('div');
+row2.className = 'icon-row';
+row2Keys.forEach(k => row2.appendChild(createIconCard(k, ICONS[k])));
+
+grid.appendChild(row1);
+grid.appendChild(row2);
+
+/* ============ 弹窗 ============ */
+function openModal(key, data){
+  Audio.playClick();
+  modalTitle.textContent = data.name;
+  if(key === 'music'){
+    renderMusicModal();
+  } else if(key === 'pet'){
+    renderPetModal();
+  } else if(key === 'ranch'){
+    renderRanchModal();
+  } else if(key === 'about'){
+    renderAboutModal();
+  } else if(key === 'skills'){
+    renderSkillsModal();
+  } else if(key === 'achievements'){
+    renderAchievementsModal();
+  } else if(key === 'games'){
+    renderGameModal();
+  } else {
+    modalBody.innerHTML = `<div class="placeholder"><span class="big">${data.emoji}</span><div>这里是【${data.name}】模块<br>内容还在建设中…<br>敬请期待 ✨</div></div>`;
+  }
+  modal.classList.add('show');
+}
+function closeModal(){ modal.classList.remove('show'); }
+document.getElementById('modalClose').addEventListener('click', ()=>{Audio.playClick();closeModal();});
+modal.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+/* 关于我模块 */
+function renderAboutModal(){
+  modalBody.innerHTML = `
+    <div class="info-card">
+      <div class="info-name">李明坤</div>
+      <div style="font-size:13px;color:var(--sage-5)">软件工程应届毕业生 · 北京邮电大学世纪学院</div>
+      <div>
+        <span class="info-tag">前端开发</span>
+        <span class="info-tag">Java 后端</span>
+        <span class="info-tag">Python</span>
+        <span class="info-tag">AIGC 应用</span>
+        <span class="info-tag">软件测试</span>
+      </div>
+      <div class="info-desc">做过 Java 后端、Vue 前端课程项目，独立完成鸿蒙毕业设计，参加过数学建模与 AIGC 竞赛。习惯自己查资料动手试错，开发时会主动做功能自测，愿意从基础岗位做起，在实际工作中积累经验。</div>
+      <ul class="info-list">
+        <li>在校成绩优良，多次获得校级奖学金</li>
+        <li>完成多个小型项目从开发到自测的整套流程：Java 全栈项目（SpringBoot + MySQL）、Vue 前端页面（Vue + Element Plus）、鸿蒙毕业设计（ArkTS/ArkUI + SpringBoot + MySQL，前后端分离）</li>
+        <li>拥有良好的前端编写能力，能独立完成业务页面开发与样式修改</li>
+        <li>适应团队合作，遇到问题习惯一步步排查</li>
+      </ul>
+    </div>
+  `;
+}
+
+/* 擅长领域模块 */
+function renderSkillsModal(){
+  const groups = [
+    { title:'后端开发', tags:['Java','SpringBoot','Python','MySQL','JavaEE','C/C++'] },
+    { title:'前端开发', tags:['Vue','Element Plus','HTML','鸿蒙 ArkTS','ArkUI'] },
+    { title:'AIGC', tags:['提示词编写调试','AI 内容筛选校验','二次调整整合'] },
+    { title:'测试 & 其他', tags:['功能自测','Bug 复现记录','前后端联调','接口文档'] }
+  ];
+  modalBody.innerHTML = groups.map(g => `
+    <div class="skill-group">
+      <div class="skill-group-title">${g.title}</div>
+      <div class="skill-tags">
+        ${g.tags.map(t => `<span class="skill-tag">${t}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+/* 成果模块 */
+function renderAchievementsModal(){
+  const items = [
+    { icon:'🏆', title:'全国大学生数学建模竞赛 奖项', year:'2024' },
+    { icon:'🥈', title:'北京邮电大学世纪学院 二等奖学金', year:'2022' },
+    { icon:'🥉', title:'北京邮电大学世纪学院 三等奖学金', year:'2023' },
+    { icon:'🥉', title:'北京邮电大学世纪学院 三等奖学金', year:'2024' },
+    { icon:'📜', title:'华为云技术精髓入门级开发者认证', year:'—' },
+    { icon:'📱', title:'鸿蒙 HarmonyOS 毕业设计 — 资源化信息匹配系统', year:'2025-2026' }
+  ];
+  modalBody.innerHTML = items.map(it => `
+    <div class="achievement-item">
+      <div class="achievement-icon">${it.icon}</div>
+      <div class="achievement-body">
+        <div class="achievement-title">${it.title}</div>
+        <div class="achievement-year">${it.year}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ============ 小游戏模块 ============ */
+let gameLoopId = null;
+let gameActive = false;
+
+/* 提交分数到后端 */
+function submitScore(gameId, score){
+  api(`${API_BASE}/games/scores/${gameId}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({score})
+  }).catch(()=>{});
+}
+
+/* 获取最高分（带本地降级） */
+async function getHighScore(gameId){
+  try{
+    const r = await api(`${API_BASE}/games/scores/${gameId}`);
+    const d = await r.json();
+    return d.highScore || 0;
+  }catch(e){
+    return parseInt(localStorage.getItem('hs_'+gameId) || '0', 10);
+  }
+}
+
+/* 游戏选择界面 */
+async function renderGameModal(){
+  const games = [
+    { id:'snake', name:'贪吃蛇', icon:'🐍', desc:'方向键控制小蛇吃小麦，越长越厉害！' },
+    { id:'dino', name:'跳障碍', icon:'🐷', desc:'按空格跳跃，帮小猪躲开仙人掌！' }
+  ];
+  // 获取各游戏最高分
+  const scores = {};
+  for(const g of games){ scores[g.id] = await getHighScore(g.id); }
+  modalBody.innerHTML = `
+    <div class="game-select">
+      ${games.map(g => `
+        <div class="game-card" data-game="${g.id}">
+          <div class="game-card-icon">${g.icon}</div>
+          <div class="game-card-info">
+            <div class="game-card-title">${g.name}</div>
+            <div class="game-card-desc">${g.desc}</div>
+          </div>
+          <div class="game-card-score">最高分 ${scores[g.id] || 0}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  modalBody.querySelectorAll('.game-card').forEach(card => {
+    card.addEventListener('click', () => {
+      Audio.playClick();
+      const gameId = card.dataset.game;
+      if(gameId === 'snake') startSnakeGame();
+      else if(gameId === 'dino') startDinoGame();
+    });
+  });
+}
+
+/* 清理游戏循环 */
+function stopGame(){
+  gameActive = false;
+  if(gameLoopId){ cancelAnimationFrame(gameLoopId); gameLoopId = null; }
+}
+
+/* 绑定关闭弹窗时清理游戏 */
+const _origCloseModalGames = closeModal;
+closeModal = function(){
+  stopGame();
+  _origCloseModalGames();
+};
+
+/* ===== 贪吃蛇游戏 ===== */
+function startSnakeGame(){
+  stopGame();
+  gameActive = true;
+  const CELL = 18, COLS = 20, ROWS = 15;
+  const W = COLS * CELL, H = ROWS * CELL;
+  let highScore = 0;
+  getHighScore('snake').then(s => { highScore = s; updateHud(); });
+
+  modalBody.innerHTML = `
+    <div class="game-wrap">
+      <div class="game-hud">
+        <span class="score">得分: <span id="snakeScore">0</span></span>
+        <span class="high-score">最高: <span id="snakeHigh">0</span></span>
+      </div>
+      <div class="game-canvas-box">
+        <canvas id="snakeCanvas" class="game-canvas" width="${W}" height="${H}"></canvas>
+        <div class="game-over-lay" id="snakeOver" style="display:none">
+          <div class="big">游戏结束</div>
+          <div>得分 <span id="snakeFinal">0</span></div>
+          <button class="game-btn" id="snakeRetry">再来一局</button>
+          <button class="game-btn" id="snakeBack">返回选择</button>
+        </div>
+      </div>
+      <div class="game-tip">方向键 / WASD 控制方向，吃小麦得分</div>
+    </div>
+  `;
+
+  const canvas = document.getElementById('snakeCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('snakeScore');
+  const highEl = document.getElementById('snakeHigh');
+  const overLay = document.getElementById('snakeOver');
+  const finalEl = document.getElementById('snakeFinal');
+
+  let snake, dir, nextDir, food, score, speed, lastTick;
+
+  function updateHud(){
+    scoreEl.textContent = score;
+    highEl.textContent = highScore;
+  }
+
+  function reset(){
+    snake = [{x:10,y:7},{x:9,y:7},{x:8,y:7}];
+    dir = {x:1,y:0}; nextDir = {x:1,y:0};
+    score = 0; speed = 140;
+    placeFood();
+    overLay.style.display = 'none';
+    updateHud();
+  }
+
+  function placeFood(){
+    while(true){
+      const f = {x:Math.floor(Math.random()*COLS), y:Math.floor(Math.random()*ROWS)};
+      if(!snake.some(s => s.x===f.x && s.y===f.y)){ food = f; return; }
+    }
+  }
+
+  function drawCell(x,y,color,inset){
+    inset = inset || 1;
+    ctx.fillStyle = color;
+    ctx.fillRect(x*CELL+inset, y*CELL+inset, CELL-inset*2, CELL-inset*2);
+  }
+
+  function draw(){
+    // 背景草地网格
+    ctx.fillStyle = '#e8f0e2';
+    ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = 'rgba(127,170,118,.15)';
+    ctx.lineWidth = 1;
+    for(let i=0;i<=COLS;i++){ ctx.beginPath(); ctx.moveTo(i*CELL,0); ctx.lineTo(i*CELL,H); ctx.stroke(); }
+    for(let i=0;i<=ROWS;i++){ ctx.beginPath(); ctx.moveTo(0,i*CELL); ctx.lineTo(W,i*CELL); ctx.stroke(); }
+    // 小麦食物
+    ctx.fillStyle = '#e8d090';
+    ctx.beginPath();
+    ctx.arc(food.x*CELL+CELL/2, food.y*CELL+CELL/2, CELL/2-2, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#d4b870';
+    ctx.fillRect(food.x*CELL+CELL/2-1, food.y*CELL+2, 2, CELL-4);
+    // 蛇身
+    snake.forEach((s,i) => {
+      const c = i===0 ? '#5a8a52' : (i%2===0 ? '#7faa76' : '#a8c9a0');
+      drawCell(s.x, s.y, c);
+    });
+    // 蛇眼
+    const head = snake[0];
+    ctx.fillStyle = '#3a4a34';
+    const ex = head.x*CELL, ey = head.y*CELL;
+    if(dir.x===1){ ctx.fillRect(ex+CELL-6, ey+5, 2,2); ctx.fillRect(ex+CELL-6, ey+CELL-7, 2,2); }
+    else if(dir.x===-1){ ctx.fillRect(ex+4, ey+5, 2,2); ctx.fillRect(ex+4, ey+CELL-7, 2,2); }
+    else if(dir.y===-1){ ctx.fillRect(ex+5, ey+4, 2,2); ctx.fillRect(ex+CELL-7, ey+4, 2,2); }
+    else { ctx.fillRect(ex+5, ey+CELL-6, 2,2); ctx.fillRect(ex+CELL-7, ey+CELL-6, 2,2); }
+  }
+
+  function step(){
+    dir = nextDir;
+    const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
+    // 撞墙
+    if(head.x<0 || head.x>=COLS || head.y<0 || head.y>=ROWS){ gameOver(); return; }
+    // 撞自己
+    if(snake.some(s => s.x===head.x && s.y===head.y)){ gameOver(); return; }
+    snake.unshift(head);
+    if(head.x===food.x && head.y===food.y){
+      score++;
+      playPetSound('assets/eat.mp3', 0.3);
+      if(score > highScore){ highScore = score; }
+      if(score % 3 === 0 && speed > 60) speed -= 8;
+      placeFood();
+    } else {
+      snake.pop();
+    }
+    updateHud();
+  }
+
+  function gameOver(){
+    gameActive = false;
+    finalEl.textContent = score;
+    overLay.style.display = 'flex';
+    submitScore('snake', score);
+  }
+
+  function loop(ts){
+    if(!gameActive) return;
+    if(!lastTick) lastTick = ts;
+    if(ts - lastTick >= speed){
+      step();
+      lastTick = ts;
+    }
+    draw();
+    if(gameActive) gameLoopId = requestAnimationFrame(loop);
+  }
+
+  function onKey(e){
+    const k = e.key.toLowerCase();
+    if((k==='arrowup'||k==='w') && dir.y!==1) nextDir = {x:0,y:-1};
+    else if((k==='arrowdown'||k==='s') && dir.y!==-1) nextDir = {x:0,y:1};
+    else if((k==='arrowleft'||k==='a') && dir.x!==1) nextDir = {x:-1,y:0};
+    else if((k==='arrowright'||k==='d') && dir.x!==-1) nextDir = {x:1,y:0};
+    else return;
+    e.preventDefault();
+  }
+
+  document.addEventListener('keydown', onKey);
+  document.getElementById('snakeRetry').addEventListener('click', () => { Audio.playClick(); reset(); gameActive=true; lastTick=0; gameLoopId=requestAnimationFrame(loop); });
+  document.getElementById('snakeBack').addEventListener('click', () => { Audio.playClick(); document.removeEventListener('keydown', onKey); renderGameModal(); });
+
+  reset();
+  gameLoopId = requestAnimationFrame(loop);
+}
+
+/* ===== 跳障碍游戏（小猪跑酷） ===== */
+function startDinoGame(){
+  stopGame();
+  gameActive = true;
+  const W = 420, H = 160, GROUND = 130;
+  let highScore = 0;
+  getHighScore('dino').then(s => { highScore = s; updateHud(); });
+
+  modalBody.innerHTML = `
+    <div class="game-wrap">
+      <div class="game-hud">
+        <span class="score">得分: <span id="dinoScore">0</span></span>
+        <span class="high-score">最高: <span id="dinoHigh">0</span></span>
+      </div>
+      <div class="game-canvas-box">
+        <canvas id="dinoCanvas" class="game-canvas" width="${W}" height="${H}"></canvas>
+        <div class="game-over-lay" id="dinoOver" style="display:none">
+          <div class="big">被撞到啦！</div>
+          <div>得分 <span id="dinoFinal">0</span></div>
+          <button class="game-btn" id="dinoRetry">再来一局</button>
+          <button class="game-btn" id="dinoBack">返回选择</button>
+        </div>
+      </div>
+      <div class="game-tip">空格 / ↑ 跳跃，躲开仙人掌</div>
+    </div>
+  `;
+
+  const canvas = document.getElementById('dinoCanvas');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('dinoScore');
+  const highEl = document.getElementById('dinoHigh');
+  const overLay = document.getElementById('dinoOver');
+  const finalEl = document.getElementById('dinoFinal');
+
+  const pig = { x: 50, y: GROUND-36, w: 36, h: 36, vy: 0, onGround: true };
+  const GRAVITY = 0.7, JUMP = -12;
+  let obstacles = [], score = 0, speed = 5, spawnTimer = 0, frame = 0;
+
+  function updateHud(){ scoreEl.textContent = score; highEl.textContent = highScore; }
+
+  function reset(){
+    pig.y = GROUND-36; pig.vy = 0; pig.onGround = true;
+    obstacles = []; score = 0; speed = 5; spawnTimer = 0; frame = 0;
+    overLay.style.display = 'none';
+    updateHud();
+  }
+
+  function jump(){
+    if(pig.onGround){ pig.vy = JUMP; pig.onGround = false; }
+  }
+
+  function spawnObstacle(){
+    const h = 20 + Math.random()*22;
+    obstacles.push({ x: W, y: GROUND-h, w: 14+Math.random()*10, h });
+  }
+
+  function drawPig(){
+    const {x,y,w,h} = pig;
+    // 身体
+    ctx.fillStyle = '#f2c8c8';
+    ctx.fillRect(x+4, y+8, w-8, h-12);
+    // 头
+    ctx.fillStyle = '#f5d5d5';
+    ctx.fillRect(x+w-14, y+4, 14, 16);
+    // 耳朵
+    ctx.fillStyle = '#e8a8a8';
+    ctx.fillRect(x+w-12, y, 4, 6);
+    ctx.fillRect(x+w-6, y+1, 4, 5);
+    // 鼻子
+    ctx.fillStyle = '#e8a8a8';
+    ctx.fillRect(x+w-6, y+10, 6, 4);
+    // 眼睛
+    ctx.fillStyle = '#3a4a34';
+    ctx.fillRect(x+w-9, y+7, 2, 2);
+    // 腿（跑动动画）
+    ctx.fillStyle = '#e8a8a8';
+    const legOffset = Math.floor(frame/6)%2===0 ? 0 : 3;
+    ctx.fillRect(x+6, y+h-6, 6, 6+legOffset);
+    ctx.fillRect(x+w-14, y+h-6, 6, 6-legOffset+3);
+    // 尾巴
+    ctx.fillStyle = '#f2c8c8';
+    ctx.fillRect(x, y+12, 6, 4);
+  }
+
+  function drawCactus(o){
+    ctx.fillStyle = '#5a8a52';
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+    ctx.fillStyle = '#7faa76';
+    ctx.fillRect(o.x+2, o.y+2, o.w-4, 4);
+    // 侧枝
+    if(o.h > 30){
+      ctx.fillStyle = '#5a8a52';
+      ctx.fillRect(o.x-6, o.y+8, 6, 10);
+      ctx.fillRect(o.x-6, o.y+8, 4, 4);
+    }
+  }
+
+  function draw(){
+    // 天空
+    ctx.fillStyle = '#fdf8f2';
+    ctx.fillRect(0,0,W,H);
+    // 远山
+    ctx.fillStyle = '#c5dcc0';
+    for(let i=0;i<4;i++){
+      const mx = (i*140 - (frame*0.3)%140) - 40;
+      ctx.beginPath();
+      ctx.moveTo(mx, GROUND);
+      ctx.lineTo(mx+70, GROUND-50);
+      ctx.lineTo(mx+140, GROUND);
+      ctx.fill();
+    }
+    // 地面
+    ctx.fillStyle = '#a8c9a0';
+    ctx.fillRect(0, GROUND, W, H-GROUND);
+    ctx.fillStyle = '#7faa76';
+    ctx.fillRect(0, GROUND, W, 3);
+    // 地面小点
+    ctx.fillStyle = '#5a8a52';
+    for(let i=0;i<W;i+=20){
+      const dx = (i - frame*speed) % W;
+      const x = dx < 0 ? dx+W : dx;
+      ctx.fillRect(x, GROUND+8, 3, 2);
+    }
+    // 障碍物
+    obstacles.forEach(drawCactus);
+    // 小猪
+    drawPig();
+  }
+
+  function collide(a,b){
+    return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+  }
+
+  function step(){
+    frame++;
+    // 跳跃物理
+    pig.vy += GRAVITY;
+    pig.y += pig.vy;
+    if(pig.y >= GROUND-pig.h){ pig.y = GROUND-pig.h; pig.vy = 0; pig.onGround = true; }
+    // 障碍物移动
+    obstacles.forEach(o => o.x -= speed);
+    obstacles = obstacles.filter(o => o.x + o.w > 0);
+    // 生成障碍物
+    spawnTimer--;
+    if(spawnTimer <= 0){
+      spawnObstacle();
+      spawnTimer = 50 + Math.floor(Math.random()*60);
+    }
+    // 碰撞
+    for(const o of obstacles){
+      if(collide({x:pig.x+4, y:pig.y+4, w:pig.w-8, h:pig.h-8}, o)){ gameOver(); return; }
+    }
+    // 分数
+    if(frame % 6 === 0){ score++; if(score>highScore) highScore=score; }
+    // 加速
+    if(score % 100 === 0 && speed < 11) speed += 0.5;
+    updateHud();
+  }
+
+  function gameOver(){
+    gameActive = false;
+    finalEl.textContent = score;
+    overLay.style.display = 'flex';
+    submitScore('dino', score);
+  }
+
+  function loop(){
+    if(!gameActive) return;
+    step();
+    draw();
+    if(gameActive) gameLoopId = requestAnimationFrame(loop);
+  }
+
+  function onKey(e){
+    if(e.key===' ' || e.key==='ArrowUp' || e.key==='w' || e.key==='W'){
+      e.preventDefault();
+      jump();
+    }
+  }
+
+  document.addEventListener('keydown', onKey);
+  canvas.addEventListener('click', jump);
+  document.getElementById('dinoRetry').addEventListener('click', () => { Audio.playClick(); reset(); gameActive=true; gameLoopId=requestAnimationFrame(loop); });
+  document.getElementById('dinoBack').addEventListener('click', () => { Audio.playClick(); document.removeEventListener('keydown', onKey); renderGameModal(); });
+
+  reset();
+  gameLoopId = requestAnimationFrame(loop);
+}
+
+/* 音乐模块：曲目列表 */
+function renderMusicModal(){
+  const list = Audio.tracks.map((t,i) => `
+    <div class="track-item ${i===Audio.currentTrack?'playing':''}" data-idx="${i}">
+      <div class="track-icon">${t.icon}</div>
+      <div class="track-info">
+        <div class="track-name">${t.name}</div>
+        <div class="track-desc">${t.desc}</div>
+      </div>
+      <div class="track-state">${i===Audio.currentTrack?'▶️':'♪'}</div>
+    </div>
+  `).join('');
+  modalBody.innerHTML = `<div class="track-list">${list}</div>`;
+  modalBody.querySelectorAll('.track-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const idx = parseInt(item.dataset.idx);
+      Audio.playClick();
+      Audio.playTrack(idx);
+      renderMusicModal();
+    });
+  });
+}
+
+/* ============ 页面宠物 ============ */
+const PETS = {
+  villager: { name:'村民', img:'assets/villager.webp', sound:'assets/villager.mp3',
+    lines:['你好呀~','今天天气真不错！','要来一起种地吗？','哼哼~','欢迎来到牧场！','今天也要加油哦'] },
+  creeper:  { name:'Creeper', img:'assets/creeper.webp', sound:'assets/creeper.mp3',
+    lines:['嘶嘶嘶...','别靠近我！','咕咕？','别看我...','我要炸了哦！','离我远点！'] },
+  pig:      { name:'一只猪', img:'assets/pig.webp', sound:'assets/pig.mp3',
+    lines:['哼哼~','好饿啊...','想睡觉了','噜噜噜','今天吃什么呢？','别戳我啦！'] },
+  piglet:   { name:'一只小猪', img:'assets/piglet.webp', sound:'assets/piglet.mp3',
+    lines:['哼哼哼！','想妈妈了~','我最可爱！','噜~','陪我玩嘛！','嘿嘿嘿~'] }
+};
+let currentPet = 'villager';
+let petX = 100, petDir = 1, petMoving = true, petWalkTimer = null;
+const petEl = document.getElementById('pet');
+
+/* 渲染宠物图片 */
+function renderPet(){
+  petEl.innerHTML = `<img src="${PETS[currentPet].img}" alt="${PETS[currentPet].name}">`;
+}
+
+/* 把气泡定位到宠物右上角 */
+function positionBubble(){
+  const bubble = document.getElementById('petBubble');
+  if(!bubble) return;
+  const rect = petEl.getBoundingClientRect();
+  const bh = bubble.offsetHeight || 30;
+  bubble.style.left = (rect.left + rect.width + 6) + 'px';
+  bubble.style.top = (rect.top - bh - 6) + 'px';
+}
+
+/* 显示对话气泡 */
+let bubbleTimer = null;
+function showBubble(text){
+  const bubble = document.getElementById('petBubble');
+  if(!bubble) return;
+  positionBubble();
+  bubble.textContent = text;
+  bubble.classList.remove('show');
+  void bubble.offsetWidth;
+  bubble.classList.add('show');
+  if(bubbleTimer) clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(() => bubble.classList.remove('show'), 2800);
+}
+
+/* 随机说一句话（优先从后端获取，失败则用本地文案） */
+function petSay(){
+  const localLine = PETS[currentPet].lines[Math.floor(Math.random()*PETS[currentPet].lines.length)];
+  api(`${API_BASE}/pets/bubble`)
+    .then(r => r.json())
+    .then(d => showBubble(d && d.text ? d.text : localLine))
+    .catch(() => showBubble(localLine));
+}
+
+/* 空闲时随机说话（8~16秒一次） */
+let idleBubbleTimer = null;
+function scheduleIdleBubble(){
+  if(idleBubbleTimer) clearTimeout(idleBubbleTimer);
+  const delay = 8000 + Math.random()*8000;
+  idleBubbleTimer = setTimeout(() => {
+    if(petMoving) petSay();
+    scheduleIdleBubble();
+  }, delay);
+}
+
+/* 宠物在草地上来回行走 */
+function startPetWalk(){
+  if(petWalkTimer) clearInterval(petWalkTimer);
+  const speed = 1.2;
+  petWalkTimer = setInterval(() => {
+    if(!petMoving) return;
+    petX += petDir * speed;
+    const maxX = window.innerWidth - petEl.offsetWidth;
+    if(petX >= maxX){ petX = maxX; petDir = -1; }
+    if(petX <= 0){ petX = 0; petDir = 1; }
+    petEl.style.left = petX + 'px';
+    petEl.style.setProperty('--sx', petDir < 0 ? 1 : -1);
+    petEl.style.transform = `scaleX(${petDir < 0 ? 1 : -1})`;
+    positionBubble();
+  }, 30);
+}
+
+/* 播放宠物音效（随主音量和静音） */
+function playPetSound(src, vol){
+  if(Audio.muted) return;
+  const a = new window.Audio(src);
+  a.volume = (vol||0.5) * Audio.volume;
+  a.play().catch(()=>{});
+}
+
+/* 点击宠物：跳跃 + 叫声 + 短暂变红 */
+petEl.addEventListener('click', e => {
+  e.stopPropagation();
+  Audio.init(); Audio.resume();
+  const pet = PETS[currentPet];
+  // 跳跃
+  petEl.classList.remove('jump');
+  void petEl.offsetWidth;
+  petEl.classList.add('jump');
+  // 变红
+  petEl.classList.remove('red-flash');
+  void petEl.offsetWidth;
+  petEl.classList.add('red-flash');
+  setTimeout(() => petEl.classList.remove('red-flash'), 250);
+  // 叫声
+  playPetSound(pet.sound, 0.6);
+  // 50% 概率说话
+  if(Math.random() < 0.5) petSay();
+  // Creeper 30% 概率爆炸
+  if(currentPet === 'creeper' && Math.random() < 0.3){
+    setTimeout(() => explode(), 250);
+  }
+});
+
+/* 爆炸动画 + 音效 */
+function explode(){
+  const rect = petEl.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  // 爆炸音效（音量调低，不吓人）
+  playPetSound('assets/explode.mp3', 0.25);
+  // 爆炸光圈
+  const exp = document.createElement('div');
+  exp.className = 'explosion';
+  exp.style.cssText = `left:${cx-40}px;top:${cy-40}px;width:80px;height:80px;`;
+  exp.innerHTML = `<div class="ring"></div><div class="core"></div>`;
+  document.body.appendChild(exp);
+  setTimeout(() => exp.remove(), 500);
+  // 爆炸粒子
+  for(let i=0;i<16;i++){
+    const p = document.createElement('div');
+    p.className = 'exp-particle';
+    const colors = ['#ff6600','#ffaa00','#ffdd00','#ff3300','#ffffff'];
+    p.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i%colors.length]};`;
+    document.body.appendChild(p);
+    const ang = (Math.PI*2/16)*i + Math.random()*0.3;
+    const dist = 40 + Math.random()*60;
+    p.animate([
+      {transform:'translate(-50%,-50%) scale(1)',opacity:1},
+      {transform:`translate(calc(-50% + ${Math.cos(ang)*dist}px),calc(-50% + ${Math.sin(ang)*dist}px)) scale(0)`,opacity:0}
+    ],{duration:500+Math.random()*300,easing:'ease-out'}).onfinish = () => p.remove();
+  }
+  // 宠物被炸飞后消失一会儿再回来
+  petMoving = false;
+  petEl.style.opacity = '0';
+  petEl.style.transform = `scaleX(${petDir<0?1:-1}) translateY(-100px) rotate(${(Math.random()-0.5)*180}deg)`;
+  setTimeout(() => {
+    petEl.style.opacity = '1';
+    petEl.style.transform = `scaleX(${petDir<0?1:-1})`;
+    petMoving = true;
+  }, 1200);
+}
+
+/* 宠物模块弹窗：切换宠物 */
+function renderPetModal(){
+  const list = Object.entries(PETS).map(([key,p]) => `
+    <div class="pet-item ${key===currentPet?'active':''}" data-key="${key}">
+      <img class="pet-thumb" src="${p.img}" alt="${p.name}">
+      <span class="pet-name">${p.name}</span>
+      ${key===currentPet?'<span style="font-size:11px;color:var(--sage-5)">当前</span>':''}
+    </div>
+  `).join('');
+  modalBody.innerHTML = `<div class="pet-list">${list}</div>
+    <p style="text-align:center;margin-top:14px;font-size:13px;color:var(--sage-5)">点击宠物可让它跳跃并发出叫声<br>Creeper 有 30% 概率爆炸 💥</p>`;
+  modalBody.querySelectorAll('.pet-item').forEach(item => {
+    item.addEventListener('click', () => {
+      Audio.playClick();
+      currentPet = item.dataset.key;
+      // 同步选择到后端
+      api(`${API_BASE}/pets/select/${currentPet}`, {method:'POST'}).catch(()=>{});
+      renderPet();
+      renderPetModal();
+    });
+  });
+}
+
+/* ============ 小牧场 ============ */
+// 后端 API 基础地址（Spring Boot 运行在 8081 端口）
+const API_BASE = 'http://localhost:8081/api';
+// 后端连通性检测：离线时跳过所有请求，避免浏览器控制台报网络错误
+let backendAlive = false;
+const backendReady = new Promise(resolve => {
+  fetch(`${API_BASE}/pets/current`, { method:'GET' })
+    .then(() => { backendAlive = true; resolve(true); })
+    .catch(() => { backendAlive = false; resolve(false); });
+});
+// 封装 fetch：后端离线时直接 reject，不发起网络请求（避免控制台网络报错）
+function api(url, options){
+  if(backendAlive) return fetch(url, options);
+  return backendReady.then(alive => {
+    if(!alive) return Promise.reject(new Error('backend offline'));
+    return fetch(url, options);
+  });
+}
+let ranchInterval = null;
+let eatTimers = [];
+let pigs = [];
+let wheatElements = [];
+let wheatBites = 0;
+const MAX_WHEAT = 10;
+const MAX_PIGS = 10;
+let pigImgSrc = 'assets/ranch_pig.png';
+let fatImgSrc = 'assets/fat_pig.png';
+let deadImgSrc = 'assets/dead_pig.png';
+
+/* 用 canvas 去掉图片白色背景 */
+function makeTransparent(src, threshold){
+  threshold = threshold || 238;
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width; canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const d = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      for(let i=0;i<d.data.length;i+=4){
+        const r=d.data[i], g=d.data[i+1], b=d.data[i+2];
+        if(r>threshold && g>threshold && b>threshold){ d.data[i+3]=0; }
+      }
+      ctx.putImageData(d, 0, 0);
+      resolve(canvas.toDataURL());
+    };
+    img.onerror = () => resolve(src);
+    img.src = src;
+  });
+}
+async function initPigImages(){
+  pigImgSrc = await makeTransparent('assets/ranch_pig.png');
+  fatImgSrc = await makeTransparent('assets/fat_pig.png');
+  deadImgSrc = await makeTransparent('assets/dead_pig.png');
+  // 处理完成后更新已存在的猪
+  pigs.forEach(p => {
+    const img = p.el.querySelector('img');
+    if(!img) return;
+    if(p.dying) img.src = deadImgSrc;
+    else if(p.fat) img.src = fatImgSrc;
+    else img.src = pigImgSrc;
+  });
+}
+initPigImages();
+
+function buildFenceHTML(){
+  const posts = [], rails = [];
+  for(let x=8;x<=92;x+=12){
+    posts.push(`<div class="fence-post" style="left:${x}%;top:2px"></div>`);
+    posts.push(`<div class="fence-post" style="left:${x}%;bottom:2px"></div>`);
+  }
+  for(let y=14;y<=86;y+=14){
+    posts.push(`<div class="fence-post" style="left:2px;top:${y}%"></div>`);
+    posts.push(`<div class="fence-post" style="right:2px;top:${y}%"></div>`);
+  }
+  rails.push(`<div class="fence-rail" style="left:2%;right:2%;top:8px"></div>`);
+  rails.push(`<div class="fence-rail" style="left:2%;right:2%;bottom:8px"></div>`);
+  rails.push(`<div class="fence-rail" style="top:14%;bottom:14%;left:8px;width:6px"></div>`);
+  rails.push(`<div class="fence-rail" style="top:14%;bottom:14%;right:8px;width:6px"></div>`);
+  const corners = ['left:0;top:0','right:0;top:0','left:0;bottom:0','right:0;bottom:0']
+    .map(s=>`<div class="fence-corner" style="${s}"></div>`).join('');
+  return `<div class="ranch-fence">${posts.join('')}${rails.join('')}${corners}</div>`;
+}
+
+function renderRanchModal(){
+  if(ranchInterval){ clearInterval(ranchInterval); ranchInterval = null; }
+  eatTimers.forEach(t => clearTimeout(t)); eatTimers = [];
+  pigs = []; wheatElements = []; wheatBites = 0;
+  // 重置后端牧场状态，保持前后端一致
+  api(`${API_BASE}/ranch/reset`, {method:'POST'}).catch(()=>{});
+  modalBody.innerHTML = `
+    <div style="display:flex;gap:10px;align-items:stretch">
+      <div class="ranch-wrap" id="ranchWrap" style="flex:1">
+        <div class="ranch-grass"></div>
+        ${buildFenceHTML()}
+        <div class="ranch-trough" id="ranchTrough">
+          <div class="trough-rim"></div>
+          <div class="trough-base"></div>
+        </div>
+        <div class="ranch-bubble" id="ranchBubble"></div>
+      </div>
+      <div class="ranch-btns">
+        <button class="ranch-btn add-btn" id="addPigBtn">➕<br>加一只猪</button>
+        <button class="ranch-btn del-btn" id="delPigBtn">➖<br>减一只猪</button>
+        <div style="font-size:11px;color:var(--sage-5);margin-top:6px;text-align:center" id="pigCount">共 0 只</div>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:10px;font-size:13px;color:var(--sage-5)">点击饲料槽添加小麦 🌾 最多 ${MAX_WHEAT} 个，猪会自动跑来吃~</p>
+  `;
+  const wrap = document.getElementById('ranchWrap');
+  const trough = document.getElementById('ranchTrough');
+
+  // 创建默认 3 只猪
+  for(let i=0;i<3;i++){
+    createPig(60 + i*70, 80 + (i%2)*50);
+  }
+  updatePigCount();
+
+  // 点击饲料槽添加小麦（可多次添加，最多 MAX_WHEAT）
+  trough.addEventListener('click', e => {
+    e.stopPropagation();
+    Audio.playClick();
+    addWheat();
+  });
+
+  document.getElementById('addPigBtn').addEventListener('click', () => {
+    Audio.playClick();
+    addPig();
+  });
+  document.getElementById('delPigBtn').addEventListener('click', () => {
+    Audio.playClick();
+    removePig();
+  });
+
+  ranchInterval = setInterval(() => pigAI(), 70);
+}
+
+/* 创建一只猪 */
+function createPig(x, y){
+  const wrap = document.getElementById('ranchWrap');
+  if(!wrap) return;
+  const el = document.createElement('div');
+  el.className = 'ranch-pig bouncing';
+  el.innerHTML = `<img src="${pigImgSrc}" alt="牧场猪">`;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  el.addEventListener('click', e => {
+    e.stopPropagation();
+    Audio.playClick();
+    showRanchBubble('哼哼~', el);
+  });
+  wrap.appendChild(el);
+  const pig = { el, x, y, dir:1, fat:false, eating:false, wanderTimer:0, dying:false, bites:0, fatTimer:null };
+  pigs.push(pig);
+  updatePigCount();
+  return pig;
+}
+
+/* 更新猪数量显示 */
+function updatePigCount(){
+  const el = document.getElementById('pigCount');
+  if(el) el.textContent = `共 ${pigs.filter(p=>!p.dying).length} 只`;
+}
+
+/* 加一只猪 */
+function addPig(){
+  if(pigs.filter(p=>!p.dying).length >= MAX_PIGS) return;
+  // 同步到后端
+  api(`${API_BASE}/ranch/pigs`, {method:'POST'}).catch(()=>{});
+  const wrap = document.getElementById('ranchWrap');
+  if(!wrap) return;
+  const x = 30 + Math.random() * (wrap.clientWidth - 100);
+  const y = 50 + Math.random() * (wrap.clientHeight - 160);
+  createPig(x, y);
+}
+
+/* 减一只猪（随机一只死亡） */
+function removePig(){
+  const alive = pigs.filter(p => !p.dying);
+  if(alive.length === 0) return;
+  // 同步到后端
+  api(`${API_BASE}/ranch/pigs`, {method:'DELETE'}).catch(()=>{});
+  const pig = alive[Math.floor(Math.random()*alive.length)];
+  pig.dying = true;
+  const img = pig.el.querySelector('img');
+  img.src = deadImgSrc;
+  playPetSound('assets/pig_die.mp3', 0.6);
+  // 升天动画
+  pig.el.classList.remove('bouncing','fat');
+  pig.el.style.transition = 'left .3s, top 1.6s ease-out, opacity 1.6s ease-out';
+  pig.el.style.top = (pig.y - 120) + 'px';
+  pig.el.style.opacity = '0';
+  setTimeout(() => {
+    if(pig.fatTimer) clearTimeout(pig.fatTimer);
+    pig.el.remove();
+    pigs = pigs.filter(p => p !== pig);
+    updatePigCount();
+  }, 1600);
+}
+
+/* 添加小麦到饲料槽 */
+function addWheat(){
+  if(wheatElements.length >= MAX_WHEAT) return;
+  // 同步到后端
+  api(`${API_BASE}/ranch/wheat`, {method:'POST'}).catch(()=>{});
+  const trough = document.getElementById('ranchTrough');
+  if(!trough) return;
+  wheatBites += 2;
+  const wheat = document.createElement('img');
+  wheat.className = 'trough-wheat show';
+  wheat.src = 'assets/ranch_ref.png';
+  // 略微重叠的位置
+  const idx = wheatElements.length;
+  const ox = (idx % 3) * 10 - 10;
+  const oy = -Math.floor(idx / 3) * 7;
+  wheat.style.left = `calc(50% + ${ox}px)`;
+  wheat.style.top = oy + 'px';
+  wheat.style.zIndex = idx;
+  trough.appendChild(wheat);
+  wheatElements.push(wheat);
+}
+
+/* 吃掉一个小麦（视觉上移除） */
+function consumeWheat(){
+  if(wheatElements.length === 0) return;
+  const w = wheatElements.pop();
+  w.remove();
+}
+
+/* 牧场提示气泡 */
+let ranchBubbleTimer = null;
+function showRanchBubble(text, pigEl){
+  const bubble = document.getElementById('ranchBubble');
+  const wrap = document.getElementById('ranchWrap');
+  if(!bubble || !wrap || !pigEl) return;
+  const pRect = pigEl.getBoundingClientRect();
+  const wRect = wrap.getBoundingClientRect();
+  bubble.style.left = (pRect.left - wRect.left + 10) + 'px';
+  bubble.style.top = (pRect.top - wRect.top - 32) + 'px';
+  bubble.textContent = text;
+  bubble.classList.remove('show');
+  void bubble.offsetWidth;
+  bubble.classList.add('show');
+  if(ranchBubbleTimer) clearTimeout(ranchBubbleTimer);
+  ranchBubbleTimer = setTimeout(()=>bubble.classList.remove('show'), 2200);
+}
+
+/* 吃饲料粒子效果 */
+function spawnEatParticles(pig){
+  const wrap = document.getElementById('ranchWrap');
+  if(!wrap) return;
+  const pRect = pig.el.getBoundingClientRect();
+  const wRect = wrap.getBoundingClientRect();
+  const cx = pRect.left - wRect.left + pRect.width/2;
+  const cy = pRect.top - wRect.top + pRect.height/2;
+  const colors = ['#f0dc9a','#c9a85a','#e8c87a','#fff'];
+  for(let i=0;i<8;i++){
+    const p = document.createElement('div');
+    p.className = 'eat-particle';
+    p.style.cssText = `left:${cx}px;top:${cy}px;background:${colors[i%colors.length]};`;
+    wrap.appendChild(p);
+    const ang = Math.random()*Math.PI*2;
+    const dist = 15+Math.random()*25;
+    p.animate([
+      {transform:'translate(-50%,-50%) scale(1)',opacity:1},
+      {transform:`translate(calc(-50% + ${Math.cos(ang)*dist}px),calc(-50% + ${Math.sin(ang)*dist}px)) scale(0)`,opacity:0}
+    ],{duration:500,easing:'ease-out'}).onfinish = ()=>p.remove();
+  }
+}
+
+/* 猪 AI 主循环 */
+function pigAI(){
+  const wrap = document.getElementById('ranchWrap');
+  const trough = document.getElementById('ranchTrough');
+  if(!wrap || !trough) return;
+  const wrapW = wrap.clientWidth;
+  const wrapH = wrap.clientHeight;
+  const pigSize = 64;
+  const minX = 16, maxX = wrapW - pigSize - 16;
+  const minY = 40, maxY = wrapH - pigSize - 30;
+
+  const tRect = trough.getBoundingClientRect();
+  const wRect = wrap.getBoundingClientRect();
+  const troughX = tRect.left - wRect.left + 10;
+  const troughY = tRect.top - wRect.top - 20;
+
+  pigs.forEach(pig => {
+    if(pig.dying) return;
+    // 肥猪：待在饲料槽，不吃不抢
+    if(pig.fat){
+      pig.el.style.left = pig.x + 'px';
+      pig.el.style.top = pig.y + 'px';
+      pig.el.style.transform = `scaleX(${pig.dir < 0 ? -1 : 1})`;
+      return;
+    }
+    if(pig.eating) return;
+
+    // 有小麦 → 走向饲料槽
+    if(wheatBites > 0){
+      const dx = troughX - pig.x;
+      const dy = troughY - pig.y;
+      const dist = Math.hypot(dx, dy);
+      if(dist < 14){
+        pig.eating = true;
+        pig.el.classList.remove('bouncing');
+        pig.bites = 0;
+        pigEat(pig);
+      } else {
+        const spd = 2.6;
+        pig.x += (dx/dist)*spd;
+        pig.y += (dy/dist)*spd;
+        pig.dir = dx < 0 ? -1 : 1;
+      }
+    } else {
+      // 随机游走
+      pig.wanderTimer--;
+      if(pig.wanderTimer <= 0){
+        pig.wanderTimer = 12 + Math.floor(Math.random()*20);
+        pig.dir = Math.random() < 0.5 ? -1 : 1;
+      }
+      const spd = 1.8;
+      pig.x += pig.dir * spd;
+      if(pig.x <= minX){ pig.x = minX; pig.dir = 1; }
+      if(pig.x >= maxX){ pig.x = maxX; pig.dir = -1; }
+      pig.y += (Math.random()-0.5)*1.2;
+      pig.y = Math.max(minY, Math.min(maxY, pig.y));
+    }
+    pig.el.style.left = pig.x + 'px';
+    pig.el.style.top = pig.y + 'px';
+    pig.el.style.transform = `scaleX(${pig.dir < 0 ? -1 : 1})`;
+  });
+}
+
+/* 一只猪吃饲料 */
+function pigEat(pig){
+  const eat = () => {
+    if(pig.dying) return;
+    if(wheatBites <= 0){
+      // 没饲料了：清空所有残留的小麦视觉元素
+      wheatBites = 0;
+      while(wheatElements.length){
+        const w = wheatElements.pop();
+        w.remove();
+      }
+      pig.eating = false;
+      if(pig.bites > 0){
+        // 吃了几口但没吃满一个小麦，不变成肥猪，回去游走
+        pig.el.classList.add('bouncing');
+      }
+      showRanchBubble('饲料吃光了！', pig.el);
+      return;
+    }
+    // 吃一口
+    wheatBites--;
+    pig.bites++;
+    // 同步消耗到后端
+    api(`${API_BASE}/ranch/wheat`, {method:'DELETE'}).catch(()=>{});
+    playPetSound('assets/eat.mp3', 0.5);
+    spawnEatParticles(pig);
+    // 每两口消耗一个小麦
+    if(pig.bites % 2 === 0){
+      consumeWheat();
+    }
+    // 吃满一个小麦（2口）→ 变成肥猪
+    if(pig.bites >= 2){
+      pig.eating = false;
+      becomeFat(pig);
+      return;
+    }
+    const t = setTimeout(eat, 450);
+    eatTimers.push(t);
+  };
+  eat();
+}
+
+/* 变成肥猪（10-20秒，瞬移到随机位置休息） */
+function becomeFat(pig){
+  const img = pig.el.querySelector('img');
+  pig.fat = true;
+  pig.bites = 0;
+  img.src = fatImgSrc;
+  pig.el.classList.remove('bouncing');
+  pig.el.classList.add('fat');
+  // 变胖时瞬移到随机位置（左侧区域），不待在饲料槽
+  const wrap = document.getElementById('ranchWrap');
+  if(wrap){
+    const wrapW = wrap.clientWidth;
+    const wrapH = wrap.clientHeight;
+    const pigSize = 64;
+    const minX = 16, maxX = wrapW - pigSize - 16;
+    const minY = 40, maxY = wrapH - pigSize - 30;
+    pig.x = minX + Math.random() * (maxX - minX) * 0.6;
+    pig.y = minY + Math.random() * (maxY - minY);
+    pig.el.style.left = pig.x + 'px';
+    pig.el.style.top = pig.y + 'px';
+  }
+  const dur = 10000 + Math.random()*10000;
+  pig.fatTimer = setTimeout(() => {
+    if(pig.dying) return;
+    img.src = pigImgSrc;
+    pig.el.classList.remove('fat');
+    pig.el.classList.add('bouncing');
+    pig.fat = false;
+    // 变瘦后不瞬移，原地开始游走
+    pig.wanderTimer = 0;
+    pig.dir = Math.random() < 0.5 ? -1 : 1;
+  }, dur);
+}
+
+// 关闭弹窗时清理牧场定时器
+const _origCloseModal = closeModal;
+closeModal = function(){
+  if(ranchInterval){ clearInterval(ranchInterval); ranchInterval = null; }
+  eatTimers.forEach(t => clearTimeout(t)); eatTimers = [];
+  pigs.forEach(p => { if(p.fatTimer) clearTimeout(p.fatTimer); });
+  _origCloseModal();
+};
+
+/* 初始化宠物：从后端获取当前选中的宠物 */
+api(`${API_BASE}/pets/current`)
+  .then(r => r.json())
+  .then(p => { if(p && p.id && PETS[p.id]){ currentPet = p.id; } })
+  .catch(()=>{})
+  .finally(() => { renderPet(); startPetWalk(); scheduleIdleBubble(); });
+
+/* ============ 背景云朵 ============ */
+const sky = document.getElementById('sky');
+function makeCloud(){
+  const c = document.createElement('div');
+  c.className = 'cloud';
+  const w = 60 + Math.random()*80;
+  c.style.cssText = `width:${w}px;height:${w*0.5}px;top:${5+Math.random()*40}%;animation-duration:${40+Math.random()*50}s;animation-delay:-${Math.random()*60}s;`;
+  c.innerHTML = `<svg viewBox="0 0 16 8" shape-rendering="crispEdges">
+    <rect x="3" y="3" width="10" height="3" fill="var(--cloud)"/>
+    <rect x="2" y="4" width="12" height="2" fill="var(--cloud)"/>
+    <rect x="4" y="2" width="3" height="1" fill="var(--cloud)"/>
+    <rect x="9" y="2" width="3" height="1" fill="var(--cloud)"/>
+    <rect x="5" y="1" width="2" height="1" fill="var(--cloud)"/>
+    <rect x="9" y="1" width="2" height="1" fill="var(--cloud)"/>
+  </svg>`;
+  sky.appendChild(c);
+}
+for(let i=0;i<6;i++) makeCloud();
+
+/* 星星（白天少，夜晚多） */
+function makeStars(count){
+  document.querySelectorAll('.star').forEach(s=>s.remove());
+  for(let i=0;i<count;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*70}%;animation-delay:${Math.random()*2}s;animation-duration:${1.5+Math.random()*2}s;`;
+    sky.appendChild(s);
+  }
+}
+makeStars(18);
+
+/* 月亮像素图 */
+document.getElementById('celestial').innerHTML = `<svg viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <rect x="4" y="2" width="8" height="2" fill="#fff8c0"/><rect x="3" y="4" width="10" height="8" fill="#fff8c0"/>
+  <rect x="4" y="12" width="8" height="2" fill="#fff8c0"/><rect x="5" y="14" width="6" height="1" fill="#fff8c0"/>
+  <rect x="6" y="5" width="1" height="1" fill="#e8d890"/><rect x="9" y="8" width="1" height="1" fill="#e8d890"/>
+  <rect x="7" y="10" width="1" height="1" fill="#e8d890"/>
+</svg>`;
+
+/* ============ 主题切换 ============ */
+const themes = [
+  { cls:'', label:'白天', icon:'☀️', stars:18 },
+  { cls:'dusk', label:'黄昏', icon:'🌇', stars:12 },
+  { cls:'night', label:'夜晚', icon:'🌙', stars:60 }
+];
+let themeIdx = 0;
+const themeBtn = document.getElementById('themeBtn');
+const themeLabel = document.getElementById('themeLabel');
+function applyTheme(){
+  const t = themes[themeIdx];
+  document.body.className = t.cls;
+  themeBtn.textContent = t.icon;
+  themeLabel.textContent = t.label;
+  makeStars(t.stars);
+}
+themeBtn.addEventListener('click', ()=>{
+  Audio.playClick();
+  themeIdx = (themeIdx+1) % themes.length;
+  applyTheme();
+});
+
+/* ============ 音量与静音控制 ============ */
+const volSlider = document.getElementById('volSlider');
+const volLabel = document.getElementById('volLabel');
+const muteBtn = document.getElementById('muteBtn');
+volSlider.addEventListener('input', e => {
+  const v = e.target.value/100;
+  Audio.setVolume(v);
+  if(v > 0 && Audio.muted){ Audio.setMuted(false); muteBtn.textContent='🔊'; }
+});
+muteBtn.addEventListener('click', ()=>{
+  Audio.playClick();
+  Audio.setMuted(!Audio.muted);
+  muteBtn.textContent = Audio.muted ? '🔇' : '🔊';
+});
+
+/* ============ 自定义像素光标 ============ */
+const cursor = document.getElementById('cursor');
+cursor.innerHTML = `<svg viewBox="0 0 8 8" shape-rendering="crispEdges">
+  <rect x="0" y="0" width="8" height="8" fill="var(--ink)"/>
+  <rect x="1" y="1" width="6" height="6" fill="var(--cream-1)"/>
+  <rect x="3" y="3" width="2" height="2" fill="var(--ink)"/>
+</svg>`;
+document.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top = e.clientY + 'px';
+});
+document.addEventListener('mousedown', () => cursor.classList.add('click'));
+document.addEventListener('mouseup', () => cursor.classList.remove('click'));
+
+/* ============ 全局点击音效 + 音频初始化 ============ */
+document.addEventListener('click', () => {
+  Audio.init();
+  Audio.resume();
+  if(!Audio.started){
+    Audio.started = true;
+    Audio.playTrack(1);
+  }
+  Audio.playClick();
+}, {once:false});
+
+/* ============ 点击图标时的像素爆炸效果 ============ */
+document.querySelectorAll('.icon-card').forEach(card => {
+  card.addEventListener('click', e => {
+    const rect = card.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    for(let i=0;i<10;i++){
+      const p = document.createElement('div');
+      p.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;width:5px;height:5px;background:${['#e8d090','#f2c8c8','#a8c9a0','#9cc4e0'][i%4]};z-index:9998;pointer-events:none;`;
+      document.body.appendChild(p);
+      const ang = (Math.PI*2/10)*i;
+      const dist = 40+Math.random()*40;
+      p.animate([
+        {transform:'translate(-50%,-50%) scale(1)',opacity:1},
+        {transform:`translate(calc(-50% + ${Math.cos(ang)*dist}px),calc(-50% + ${Math.sin(ang)*dist}px)) scale(0)`,opacity:0}
+      ],{duration:600,easing:'ease-out'}).onfinish = () => p.remove();
+    }
+  });
+});
+
+/* 初始化音量 */
+Audio.setVolume(0.3);
+</script>
+</body>
+</html>
