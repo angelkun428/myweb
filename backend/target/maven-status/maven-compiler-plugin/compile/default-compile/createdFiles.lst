@@ -1,0 +1,12 @@
+com\kun\ranch\controller\GameController.class
+com\kun\ranch\service\RanchService.class
+com\kun\ranch\service\PetService.class
+com\kun\ranch\model\Pig.class
+com\kun\ranch\service\GameService.class
+com\kun\ranch\model\GameScore.class
+com\kun\ranch\model\Pet.class
+com\kun\ranch\RanchApplication.class
+com\kun\ranch\controller\RanchController.class
+com\kun\ranch\controller\PetController.class
+com\kun\ranch\config\CorsConfig.class
+com\kun\ranch\model\RanchState.class

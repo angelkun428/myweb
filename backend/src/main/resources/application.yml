@@ -1,0 +1,19 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: ranch-backend
+  jackson:
+    default-property-inclusion: non_null
+
+# CORS 允许前端 (静态服务 8080) 跨域访问
+app:
+  cors:
+    allowed-origins: http://localhost:8080
+
+# 牧场配置
+ranch:
+  max-pigs: 10
+  max-wheat: 10
+  wheat-bites-per-unit: 2
